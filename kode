@@ -2,805 +2,349 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Interaktif | USG Keeler & Lampu TRUMPF</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zalva Study Planner 🎀</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Neutral Palette -->
-    <!-- Application Structure Plan: The application uses a tabbed, single-page interface with a top navigation bar (Beranda, USG, Lampu Operasi, Panduan, Detail USG, Detail Lampu) to provide a clear, non-linear exploration path. This structure was chosen over a linear report format to allow users to directly access the information they are interested in, improving usability. The USG section uses interactive charts for data comparison, while the Panduan section uses a timeline and cards to make procedural and safety information more digestible and engaging. New sections for "Detail USG" and "Detail Lampu" are added to provide comprehensive information on installation, operation, and troubleshooting, enhancing the depth of exploration. -->
-    <!-- Visualization & Content Choices: USG Probe Specs -> Goal: Compare -> Viz: Interactive Bar Chart (Chart.js) -> Interaction: Buttons to filter/highlight data -> Justification: More effective for comparing quantitative data than a static table. Maintenance Schedule -> Goal: Organize -> Viz: Vertical Timeline (HTML/CSS) -> Interaction: Click to expand details -> Justification: Clearly shows a time-based process. K3 Hazards -> Goal: Inform -> Viz: Icon-based Cards (HTML/CSS) -> Interaction: Static hover effects -> Justification: Visually separates distinct categories for quick scanning. New sections for detailed procedures are presented as collapsible text blocks for better content organization. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f7f4;
-            color: #3d3d3d;
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Dancing+Script:wght@700&display=swap');
+        
+        :root {
+            --soft-pink: #FFFBFC;
+            --accent-pink: #FFD1DC;
+            --deep-pink: #FF85A1;
+            --text-color: #5D4D50;
         }
-        .nav-link {
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--soft-pink);
+            color: var(--text-color);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .coquette-border {
+            border: 2px solid var(--accent-pink);
+            box-shadow: 0 10px 20px rgba(255, 209, 220, 0.3);
+        }
+
+        .active-tab {
+            background-color: var(--deep-pink);
+            color: white !important;
+            box-shadow: 0 8px 15px rgba(255, 133, 161, 0.4);
+        }
+
+        .fancy-font {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .session-card {
             transition: all 0.3s ease;
-            border-bottom: 2px solid transparent;
         }
-        .nav-link.active, .nav-link:hover {
-            color: #007A7A;
-            border-bottom-color: #007A7A;
+
+        .session-card:active {
+            transform: scale(0.97);
         }
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
-        }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 400px;
-        }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 350px;
-            }
-        }
-        .k3-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .k3-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .timeline-item-content, .detail-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out;
-        }
-        .section-title-toggle {
-            cursor: pointer;
+
+        .hide-scroll::-webkit-scrollbar { display: none; }
+
+        /* Custom Checkbox */
+        .pink-check {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--accent-pink);
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 1rem;
-            background-color: #f0f0f0;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
+            justify-content: center;
+            transition: all 0.2s;
         }
-        .section-title-toggle svg {
-            transition: transform 0.3s ease-in-out;
-        }
-        .section-title-toggle.expanded svg {
-            transform: rotate(90deg);
+
+        input:checked + .pink-check {
+            background-color: var(--deep-pink);
+            border-color: var(--deep-pink);
+            color: white;
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="pb-10">
 
-    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex-shrink-0">
-                    <h1 class="text-xl font-bold text-gray-800">Laporan Interaktif PKL</h1>
-                </div>
-                <nav class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#" class="nav-link active px-3 py-2 rounded-md text-sm font-medium" data-target="beranda">Beranda</a>
-                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium" data-target="usg">USG Keeler 4Sight</a>
-                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium" data-target="detail-usg">Detail USG</a>
-                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium" data-target="lampu">Lampu TRULIGHT 5510</a>
-                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium" data-target="detail-lampu">Detail Lampu</a>
-                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium" data-target="panduan">Panduan K3 & Pemeliharaan</a>
-                    </div>
-                </nav>
-                <div class="md:hidden">
-                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 focus:outline-none">
-                        <span class="sr-only">Buka menu utama</span>
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 bg-white/80 backdrop-blur-md z-40 p-5 flex justify-between items-center border-b border-pink-100">
+        <div>
+            <h1 class="fancy-font text-3xl text-[#FF85A1]">Zalva's Planner 🎀</h1>
+            <p class="text-[9px] font-black uppercase tracking-[0.2em] text-pink-300">Universitas Terbuka 2025</p>
         </div>
-        <div id="mobile-menu" class="md:hidden hidden">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#" class="nav-link active block px-3 py-2 rounded-md text-base font-medium" data-target="beranda">Beranda</a>
-                <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium" data-target="usg">USG Keeler 4Sight</a>
-                <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium" data-target="detail-usg">Detail USG</a>
-                <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium" data-target="lampu">Lampu TRULIGHT 5510</a>
-                <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium" data-target="detail-lampu">Detail Lampu</a>
-                <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium" data-target="panduan">Panduan K3 & Pemeliharaan</a>
-            </div>
+        <div class="flex gap-3">
+            <button onclick="showTab('home')" id="nav-home" class="w-10 h-10 rounded-full flex items-center justify-center text-pink-300 active-tab"><i class="fa-solid fa-house"></i></button>
+            <button onclick="showTab('courses')" id="nav-courses" class="w-10 h-10 rounded-full flex items-center justify-center text-pink-300"><i class="fa-solid fa-book-open"></i></button>
         </div>
-    </header>
+    </nav>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="p-6 max-w-2xl mx-auto">
         
-        <section id="beranda" class="content-section active">
-            <div class="text-center bg-white p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Laporan Praktik Kerja Lapangan</h2>
-                <p class="text-lg text-gray-600 mb-2">Gen Yus Hafiz Moreno | Poltekkes Kemenkes Surabaya</p>
-                <p class="text-md text-gray-500 mb-6">Lokasi: RS Mata Cicendo</p>
-                <p class="max-w-3xl mx-auto text-gray-700">
-                    Selamat datang di laporan interaktif ini. Aplikasi ini dirancang untuk menyajikan analisis mendalam mengenai dua peralatan medis utama: **USG Keeler 4Sight** dan **Lampu Operasi TRUMPF TRULIGHT 5510**. Tujuannya adalah untuk mempermudah pemahaman spesifikasi teknis, prosedur pemeliharaan, dan panduan keselamatan kerja (K3) melalui visualisasi data dan navigasi yang intuitif. Silakan gunakan navigasi di atas untuk menjelajahi setiap bagian.
-                </p>
-            </div>
-        </section>
-
-        <section id="usg" class="content-section">
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">USG Keeler 4Sight</h2>
-                <p class="max-w-4xl mx-auto text-center text-gray-700 mb-8">
-                    USG Mata adalah prosedur diagnostik non-invasif yang menggunakan gelombang suara frekuensi tinggi untuk menghasilkan gambar struktur internal mata secara *real-time*. Alat ini sangat krusial ketika media optik mata (seperti kornea atau lensa) keruh, sehingga menghalangi pemeriksaan visual langsung. Bagian ini akan menguraikan spesifikasi teknis dari berbagai probe yang digunakan oleh Keeler 4Sight, memungkinkan perbandingan fitur dan kapabilitasnya secara interaktif.
-                </p>
+        <!-- HOME TAB: REMINDERS -->
+        <section id="tab-home" class="space-y-6">
+            <div class="bg-gradient-to-br from-pink-50 to-white p-6 rounded-[2rem] coquette-border">
+                <h2 class="font-black text-lg mb-1">Halo, Zalva Cantik! ✨</h2>
+                <p class="text-xs text-slate-500 mb-4">Minggu ini ada beberapa tugas yang harus diselesaikan:</p>
                 
-                <div class="grid md:grid-cols-2 gap-8 items-center">
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Perbandingan Frekuensi Probe</h3>
-                        <div class="chart-container">
-                            <canvas id="frequencyChart"></canvas>
-                        </div>
-                        <p class="text-center text-sm text-gray-500 mt-2">Frekuensi lebih tinggi umumnya memberikan resolusi lebih baik namun dengan penetrasi lebih dangkal.</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Perbandingan Akurasi & Resolusi</h3>
-                        <div class="chart-container">
-                            <canvas id="resolutionChart"></canvas>
-                        </div>
-                        <p class="text-center text-sm text-gray-500 mt-2">Nilai resolusi yang lebih kecil menunjukkan kemampuan membedakan detail yang lebih halus.</p>
-                    </div>
+                <div id="urgentReminders" class="space-y-3">
+                    <!-- Reminders will be injected here -->
                 </div>
+            </div>
 
-                <div class="mt-12">
-                     <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Spesifikasi Umum Perangkat</h3>
-                     <div class="max-w-md mx-auto overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3">Fitur</th>
-                                    <th scope="col" class="px-6 py-3">Spesifikasi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="bg-white border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Dimensi</th>
-                                    <td class="px-6 py-4">38.1 cm x 26.1 cm x 8.89 cm</td>
-                                </tr>
-                                <tr class="bg-gray-50 border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Berat</th>
-                                    <td class="px-6 py-4">3.175 kg</td>
-                                </tr>
-                                <tr class="bg-white border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Tegangan Masuk</th>
-                                    <td class="px-6 py-4">100-240 Vac, ±10%, 47-63 Hz</td>
-                                </tr>
-                                 <tr class="bg-gray-50">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Arus</th>
-                                    <td class="px-6 py-4">5.6 Amps DC output (80 watts)</td>
-                                </tr>
-                                <tr class="bg-white">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Suhu Operasi</th>
-                                    <td class="px-6 py-4">10°—40°C</td>
-                                </tr>
-                                <tr class="bg-gray-50">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Kelembapan Operasi</th>
-                                    <td class="px-6 py-4">20—80%</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="flex items-center justify-between px-2">
+                <h3 class="font-black text-sm uppercase tracking-widest text-pink-400">Ringkasan Matkul</h3>
+                <span class="text-[10px] font-bold text-slate-400">8 Mata Kuliah</span>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4" id="miniCourseList">
+                <!-- Mini course cards -->
             </div>
         </section>
 
-        <section id="detail-usg" class="content-section">
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Detail Operasional USG Keeler 4Sight</h2>
-                <p class="max-w-4xl mx-auto text-center text-gray-700 mb-8">
-                    Bagian ini menyediakan informasi mendalam mengenai instalasi, bagian-bagian, fungsi probe, serta langkah-langkah pengoperasian dan perbaikan dasar untuk USG Keeler 4Sight. Memahami detail ini penting untuk penggunaan yang efektif dan pemecahan masalah awal.
-                </p>
-
-                <div class="space-y-6">
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="instalasi-usg">
-                            <h3 class="text-xl font-semibold text-gray-800">Instalasi & Penempatan Alat</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="instalasi-usg" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Instalasi Alat:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Unit Kontrol:** Colokkan Unit Kontrol Keeler 4Sight ke stop kontak yang sudah di-ground dengan benar.</li>
-                                <li>**Aksesori:** Sambungkan aksesori yang dibutuhkan (mouse, keyboard, monitor, dll.).</li>
-                                <li>**Probe:** Cukup colokkan probe yang diinginkan; unit akan otomatis mengidentifikasinya.</li>
-                                <li>**Printer Eksternal:** Ikuti instruksi produsen printer untuk instalasi ke Unit Kontrol Accutome 4Sight.</li>
-                                <li>**Sistem EMR:** Untuk terhubung ke sistem EMR, harus menyambungkan ke server.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Penempatan & Penyimpanan Alat:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**Pengoperasian:** Alat beroperasi pada suhu 10°—40°C dan kelembapan 20—80% (tanpa kondensasi). Hindari perubahan suhu/kelembaban mendadak untuk mencegah kerusakan.</li>
-                                <li>**Penyimpanan:** Simpan pada suhu -20°—60°C dan kelembapan 15—90%. Jangan simpan di tempat ekstrem (terlalu panas/dingin) atau lembap. Pastikan ventilasi baik untuk menghindari korosi.</li>
-                                <li>**Kerapian:** Pastikan kabel dan aksesori tertata rapi. Simpan alat di wadahnya dan jauhkan dari jangkauan mudah.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="bagian-usg">
-                            <h3 class="text-xl font-semibold text-gray-800">Bagian-Bagian Alat & Fungsi Probe</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="bagian-usg" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Bagian Depan Alat:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>A-Scan Probe, UBM, B-Scan Probe, Pachymeter</li>
-                                <li>Footswitch, Keyboard, Mouse, LCD, Knob</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Tampak Samping & Belakang:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>3 Port USB, HDMI & RJ Jacks, Power Connector</li>
-                                <li>Pachymetry probe port, B-Scan Probe port, UBM Probe Port, A-Scan Probe Port</li>
-                                <li>Footswitch connector Port, Probe holder, Built-in support stand</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Fungsi Masing-Masing Probe:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**A-Scan Probe:** Mengukur dimensi okular (panjang aksial, kedalaman bilik mata anterior, ketebalan lensa) dan memprediksi kekuatan Lensa Intraokular (IOL) sebelum operasi katarak.</li>
-                                <li>**B-Scan Probe:** Mengevaluasi struktur internal (ruptur/dislokasi lensa, kekeruhan cairan, benda asing, ablasi retina, kondisi koroidal) dan eksternal mata (ruptur sklera, perdarahan retrobulbar, benda asing di luar bola mata).</li>
-                                <li>**Pachymetry:** Mengukur ketebalan kornea, penting untuk interpretasi tekanan intraokular (TIO) dalam manajemen glaukoma dan sebelum prosedur bedah refraktif seperti LASIK.</li>
-                                <li>**UBM:** Pencitraan resolusi tinggi untuk segmen anterior mata, membantu diagnosis kondisi patologis atau traumatis pada bagian depan mata (glaucoma sudut tertutup, kista/tumor iris/badan siliaris, dislokasi lensa kecil).</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="pengoperasian-usg">
-                            <h3 class="text-xl font-semibold text-gray-800">Pengoperasian Alat USG</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="pengoperasian-usg" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Setting Awal:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Tipe Mata:** Pilih jenis mata pasien dari *drop-down* (default: Phakic).</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Pengoperasian A-Scan:</h4>
-                            <h5 class="font-medium text-gray-600 mt-2 mb-1">Metode Kontak:</h5>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>Oleskan anestesi dan gel ultrasound ke probe.</li>
-                                <li>Posisikan pasien (lihat lurus ke depan).</li>
-                                <li>Letakkan probe di tengah kornea, tegak lurus.</li>
-                                <li>Sesuaikan kekuatan sinyal (*gain knob*).</li>
-                                <li>Ambil pembacaan saat gelombang stabil (puncak retina tinggi & tajam).</li>
-                                <li>Ulangi untuk pembacaan konsisten.</li>
-                            </ul>
-                            <h5 class="font-medium text-gray-600 mt-2 mb-1">Metode Imersi:</h5>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>Pasang *eye cup* dan isi dengan saline steril.</li>
-                                <li>Posisikan probe di dalam *eye cup* (tidak menyentuh mata).</li>
-                                <li>Minta pasien tahan mata tetap terbuka lebar.</li>
-                                <li>Sesuaikan kekuatan sinyal (*gain knob*).</li>
-                                <li>Ambil pembacaan setelah gelombang optimal.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Pengoperasian B-Scan:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Persiapan:** Minta pasien menutup mata, lalu oleskan gel kopling pada kelopak mata.</li>
-                                <li>**Pilih Mode:** Pilih mode yang sesuai dengan apa yang dibutuhkan dengan jarak yang akan diukur.</li>
-                                <li>**Penempatan Probe:** Letakkan probe B-scan pada kelopak mata tertutup sesuai area yang ingin dipindai (aksial, horizontal, vertikal).</li>
-                                <li>**Mulai Pemindaian:** Tekan tombol start/stop pada probe/footswitch, atau tombol "Scan" di layar.</li>
-                                <li>**Lakukan Pemindaian:** Gerakkan probe perlahan melintasi area yang diminati sambil mengamati gambar *real-time* di layar. Sesuaikan orientasi probe.</li>
-                                <li>**Ambil Snapshot:** Tangkap gambar penting untuk analisis lebih lanjut saat gambar yang diinginkan muncul (beku).</li>
-                                <li>**Hentikan Pemindaian:** Tekan kembali tombol start/stop atau tombol "Stop" di layar untuk membekukan gambar dan menghentikan pemindaian.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Pengoperasian UBM:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Mulai Pemindaian:** Tekan tombol start/stop pada probe UBM, injak footswitch (jika ada), atau klik tombol "Scan" di layar (jika di Quick Mode).</li>
-                                <li>**Lakukan Pemindaian:** Amati citra *real-time* di layar. Gerakkan probe perlahan dan sistematis untuk memvisualisasikan struktur segmen anterior (kornea, iris, badan siliaris, sudut, lensa anterior). Sesuaikan posisi probe untuk tampilan terbaik.</li>
-                                <li>**Ambil Snapshot:** Simpan citra yang diinginkan (saat beku) untuk analisis. Ulangi untuk berbagai sudut.</li>
-                                <li>**Hentikan Pemindaian:** Tekan kembali tombol start/stop pada probe/footswitch, atau tombol "Stop" di layar, untuk membekukan gambar dan menghentikan pemindaian.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Pengoperasian Pachymetry:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**Identifikasi Pasien:** Nama atau ID pasien otomatis tampil (jika sudah dimasukkan dari Home Screen). Jika pakai "Quick Mode", bisa lanjut tanpa info pasien.</li>
-                                <li>**Masukkan Data IOP:** Masukkan nilai Tekanan Intraokular (IOP) yang sudah diukur secara eksternal untuk mata kanan (OD) dan/atau kiri (OS).</li>
-                                <li>**Pilih Segmen Kornea:** Aktifkan segmen kornea yang diinginkan (dari sembilan bagian simbol kornea) untuk OD atau OS. Segmen yang dipilih akan berwarna lebih terang.</li>
-                                <li>**Bersihkan Pengukuran (Opsional):** Pilih "Clear All" jika ingin menghapus semua pengukuran mata tersebut.</li>
-                                <li>**Mulai Pengukuran:** Klik tombol "Start Reading" di kanan layar.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="perbaikan-usg">
-                            <h3 class="text-xl font-semibold text-gray-800">Perbaikan & Kalibrasi Alat USG</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="perbaikan-usg" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Perbaikan Alat (Pemecahan Masalah Umum):</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**"Error loading configuration file"**: Berkas konfigurasi rusak/tidak lengkap.</li>
-                                <li>**"Can’t find the right type of probe for this exam"**: Probe yang terhubung tidak sesuai dengan jenis pemeriksaan yang dipilih.</li>
-                                <li>**"Error deleting snapshots"**: Berkas *snapshot* sedang digunakan/dikunci.</li>
-                                <li>**"Entered value out of range/invalid"**: Nilai input di luar batas yang diterima perangkat.</li>
-                                <li>**"Failed to initialize DICOM"**: Masalah koneksi DICOM. Coba sambungkan ulang ke server.</li>
-                                <li>**"Could not locate the folder which contains…"**: Perangkat lunak tidak dapat menemukan folder yang seharusnya diakses.</li>
-                                <li>**"Failed to print to specified printer"**: Masalah komunikasi antara unit kontrol 4Sight dan printer (umumnya kabel longgar/rusak).</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Kalibrasi Alat USG:</h4>
-                            <p class="text-sm text-gray-600 mb-2">Alat dikalibrasi dengan parameter uji sebagai berikut:</p>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**Fisik Alat:** (Badan/Selungkup, Kabel & kelenturannya, Tombol & Saklar)</li>
-                                <li>**Pengukuran keselamatan listrik** dengan ESA.</li>
-                                <li>**Pengukuran *axial length* A-Scan Biometry** dengan kalibrator *test block*.</li>
-                                <li>**Pengukuran *pachymetry*** menggunakan Test Block Pachymetry Verified.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+        <!-- COURSES TAB -->
+        <section id="tab-courses" class="hidden space-y-6">
+            <div id="courseDetailView" class="hidden animate-in fade-in slide-in-from-bottom-4">
+                <button onclick="backToCourses()" class="mb-4 text-pink-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar
+                </button>
+                <div id="courseHeader" class="mb-8"></div>
+                <div id="sessionGrid" class="grid grid-cols-3 md:grid-cols-4 gap-3"></div>
             </div>
-        </section>
 
-        <section id="lampu" class="content-section">
-             <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Lampu Operasi TRUMPF TRULIGHT 5510</h2>
-                <p class="max-w-4xl mx-auto text-center text-gray-700 mb-10">
-                    Lampu operasi adalah komponen krusial di ruang bedah yang berfungsi memberikan pencahayaan optimal dan bebas bayangan pada area operasi. TRULIGHT 5510 dirancang untuk memenuhi standar tinggi dalam hal intensitas, rendering warna, dan fleksibilitas. Bagian ini menyoroti metrik kinerja utama dan komponen yang memerlukan inspeksi visual rutin untuk memastikan fungsi dan keamanannya.
-                </p>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                    <div class="bg-gray-50 p-6 rounded-lg">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Indeks Rendering Warna (CRI)</h4>
-                        <p class="text-4xl font-bold text-[#007A7A]">>90</p>
-                        <p class="text-sm text-gray-500 mt-2">Memastikan warna jaringan tubuh terlihat akurat.</p>
-                    </div>
-                    <div class="bg-gray-50 p-6 rounded-lg">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Intensitas Cahaya</h4>
-                        <p class="text-4xl font-bold text-[#007A7A]">160,000 Lux</p>
-                        <p class="text-sm text-gray-500 mt-2">Pencahayaan terang dan fokus pada bidang operasi (pada 1.0 m).</p>
-                    </div>
-                    <div class="bg-gray-50 p-6 rounded-lg">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-2">Ukuran Bidang Cahaya</h4>
-                        <p class="text-4xl font-bold text-[#007A7A]">16-30 cm</p>
-                        <p class="text-sm text-gray-500 mt-2">Dapat disesuaikan untuk berbagai jenis prosedur.</p>
-                    </div>
-                </div>
-
-                <div class="mt-12">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Spesifikasi Umum Lampu</h3>
-                     <div class="max-w-md mx-auto overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3">Fitur</th>
-                                    <th scope="col" class="px-6 py-3">Spesifikasi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="bg-white border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Merk/Tipe</th>
-                                    <td class="px-6 py-4">Trumpf / Trulight 5510</td>
-                                </tr>
-                                <tr class="bg-gray-50 border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Nomor Seri</th>
-                                    <td class="px-6 py-4">108089334</td>
-                                </tr>
-                                <tr class="bg-white border-b">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Lokasi Alat</th>
-                                    <td class="px-6 py-4">Ruang OK. Kamar 8</td>
-                                </tr>
-                                 <tr class="bg-gray-50">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Suhu Operasi</th>
-                                    <td class="px-6 py-4">+10 °C to +40 °C</td>
-                                </tr>
-                                <tr class="bg-white">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Kelembapan Operasi</th>
-                                    <td class="px-6 py-4">30 % to 75 %</td>
-                                </tr>
-                                <tr class="bg-gray-50">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Berat Kepala Lampu</th>
-                                    <td class="px-6 py-4">16.4 kg / 36.16 lbs</td>
-                                </tr>
-                                <tr class="bg-white">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Tegangan Koneksi</th>
-                                    <td class="px-6 py-4">100–240 V AC, 50/60 Hz</td>
-                                </tr>
-                                <tr class="bg-gray-50">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Daya Input Maks.</th>
-                                    <td class="px-6 py-4">160 VA</td>
-                                </tr>
-                                <tr class="bg-white">
-                                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Dapat Diredupkan</th>
-                                    <td class="px-6 py-4">Endo < 10%, 50 %–100 %</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="detail-lampu" class="content-section">
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Detail Operasional Lampu Operasi TRUMPF TRULIGHT 5510</h2>
-                <p class="max-w-4xl mx-auto text-center text-gray-700 mb-8">
-                    Bagian ini menjelaskan instalasi, bagian-bagian, prosedur pengoperasian, serta panduan perbaikan dan kalibrasi untuk Lampu Operasi TRUMPF TRULIGHT 5510. Pemahaman yang komprehensif akan memastikan penggunaan yang aman dan pemeliharaan yang efektif.
-                </p>
-
-                <div class="space-y-6">
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="instalasi-lampu">
-                            <h3 class="text-xl font-semibold text-gray-800">Instalasi & Penempatan Alat</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="instalasi-lampu" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Instalasi Alat:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Pemasangan Struktur Pendukung:** Pasang *mounting plate* atau *support frame* yang kokoh di langit-langit untuk menopang beban lampu.</li>
-                                <li>**Perakitan Lengan Suspensi:** Rakit dan pasang lengan suspensi ke *mounting plate*. Lengan ini memungkinkan pergerakan lampu.</li>
-                                <li>**Pengkabelan Listrik:** Sambungkan kabel listrik dari catu daya ke sistem lengan suspensi dan unit kepala lampu. Pastikan isolasi dan keamanan sambungan.</li>
-                                <li>**Pemasangan Unit Kepala Lampu:** Pasang unit kepala lampu bedah ke ujung lengan suspensi. Ini sering memerlukan alat khusus dan beberapa teknisi.</li>
-                                <li>**Pemasangan Handle dan Kontrol:** Pasang *handle* sterilisasi dan panel kontrol lampu untuk mengatur intensitas, ukuran bidang cahaya, dll.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Penempatan & Penyimpanan Alat:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**Lingkungan Terkontrol:** Pastikan suhu ruang operasi antara +10 °C hingga +40 °C dan kelembaban relatif 30% hingga 75% untuk menjaga fungsi lampu dan kenyamanan tim.</li>
-                                <li>**Posisi Ergonomis & Bebas Hambatan:** Lampu harus mudah diposisikan, tidak bentrok dengan peralatan lain, bergerak mulus, dan terkunci pada posisi yang diinginkan untuk meminimalkan bayangan dan silau.</li>
-                                <li>**Ketinggian Optimal:** Gunakan lampu pada ketinggian yang sesuai untuk kinerja optimal, umumnya hingga 3000 m di atas permukaan laut.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="bagian-lampu">
-                            <h3 class="text-xl font-semibold text-gray-800">Bagian-Bagian Alat & Tombol Kontrol</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="bagian-lampu" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Bagian Alat (Blok Diagram):</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>Ceiling cover panel, Ceiling conduit, Boom, AC 2000</li>
-                                <li>Convenience bracket, Light head, Camera</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Tombol Kontrol:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>ON / OFF button</li>
-                                <li>Size button</li>
-                                <li>Light intensity control and endo-dimming</li>
-                                <li>Adaptive Light Control plus (ALC plus) button</li>
-                                <li>Adaptive Light Control (ALC) button</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="pengoperasian-lampu">
-                            <h3 class="text-xl font-semibold text-gray-800">Pengoperasian Lampu Operasi</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="pengoperasian-lampu" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Menghidupkan Lampu:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Dari Kondisi Mati:** Tekan tombol ON/OFF pada lampu atau kontrol dinding. Lampu akan menyala dan indikator status menjadi hijau.</li>
-                                <li>**Dari Mode Siaga:** Tekan *handle* steril atau tombol ON/OFF. Lampu akan menyala dengan pengaturan terakhir.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Penyesuaian Pencahayaan:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Intensitas Cahaya:** Gunakan tombol pengatur cahaya pada panel kontrol untuk mengatur kecerahan.</li>
-                                <li>**Ukuran Bidang Cahaya (Fokus):** Sesuaikan diameter cahaya dengan tombol plus/minus pada *handle* steril atau panel kontrol.</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Menggunakan Handle untuk Posisi:</h4>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>***Handle* Steril:** Digunakan oleh staf di area steril untuk memposisikan lampu dan menyesuaikan pencahayaan tanpa mengganggu sterilitas.</li>
-                                <li>***Handle* Samping Non-Steril:** Digunakan oleh staf di area non-steril untuk memposisikan lampu secara fisik.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="border rounded-lg">
-                        <div class="section-title-toggle p-4 bg-gray-50 rounded-t-lg" data-toggle="perbaikan-lampu">
-                            <h3 class="text-xl font-semibold text-gray-800">Perbaikan & Kalibrasi Lampu Operasi</h3>
-                            <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                        <div id="perbaikan-lampu" class="detail-content p-4">
-                            <h4 class="font-medium text-gray-700 mb-2">Perbaikan Alat (Pemecahan Masalah Umum):</h4>
-                            <h5 class="font-medium text-gray-600 mt-2 mb-1">Lengan Penyangga:</h5>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Masalah:** Kepala lampu jatuh/naik atau sulit/terlalu mudah digerakkan.</li>
-                                <li>**Solusi:** Sesuaikan gaya pegas atau gaya pengereman pada lengan penyangga.</li>
-                            </ul>
-                            <h5 class="font-medium text-gray-600 mt-2 mb-1">Pencahayaan & Optik:</h5>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Masalah:** Intensitas pencahayaan rendah, bidang cahaya tidak homogen, atau lampu tidak menyala.</li>
-                                <li>**Solusi:** Tingkatkan intensitas pencahayaan; posisikan kepala lampu dalam jangkauan kerja; periksa catu daya, tombol On/Off, steker, atau unit *power supply*. Jika lebih dari 10 LED rusak atau ada masalah elektronik, hubungi Layanan Pelanggan Teknis. Jika bidang cahaya tidak homogen karena *color temperature* hanya di satu kepala lampu, nyalakan fungsi sinkronisasi.</li>
-                            </ul>
-                            <h5 class="font-medium text-gray-600 mt-2 mb-1">Fitur Otomatis (ALC Plus):</h5>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1 mb-4">
-                                <li>**Masalah:** Pengukuran jarak otomatis tidak berfungsi (layar ALC Plus berkedip).</li>
-                                <li>**Solusi:** Nonaktifkan ALC Plus dan pilih jarak secara manual, atau mulai ulang lampu (putuskan dan sambungkan kembali catu daya).</li>
-                            </ul>
-                            <h4 class="font-medium text-gray-700 mb-2">Kalibrasi Lampu Operasi:</h4>
-                            <p class="text-sm text-gray-600 mb-2">Lampu operasi dikalibrasi dengan parameter uji sebagai berikut:</p>
-                            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                <li>**Intensitas Cahaya (Iluminasi):** Diukur dalam lux (lx) untuk memastikan tingkat kecerahan yang tepat. Alat: Lux Meter atau Illuminance Meter.</li>
-                                <li>**Suhu Warna (*Colour Temperature*):** Diukur dalam Kelvin (K) untuk memastikan karakteristik warna cahaya yang akurat. Alat: Colorimeter atau Spectroradiometer.</li>
-                                <li>**Indeks Rendering Warna (CRI - *Colour Rendering Index*):** Skala 0-100, mengukur seberapa akurat lampu mereproduksi warna objek. Lampu operasi memerlukan CRI tinggi (>90). Alat: Colorimeter atau Spectroradiometer.</li>
-                                <li>**Ukuran Bidang Cahaya:** Diameter area yang diterangi secara memadai dan keseragaman intensitasnya pada jarak kerja standar. Alat: Measuring grid (jaring pengukuran) atau pola uji khusus, dikombinasikan dengan Lux Meter dan terkadang perangkat lunak khusus.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="panduan" class="content-section">
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-md">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4 text-center">Panduan K3 & Pemeliharaan</h2>
-                <p class="max-w-4xl mx-auto text-center text-gray-700 mb-10">
-                    Keselamatan dan keandalan alat adalah prioritas utama. Bagian ini menyajikan panduan terstruktur untuk Keselamatan dan Kesehatan Kerja (K3) serta jadwal pemeliharaan preventif. Mengikuti panduan ini sangat penting untuk meminimalkan risiko, memperpanjang umur alat, dan memastikan kinerja yang konsisten.
-                </p>
-
-                <div class="grid lg:grid-cols-2 gap-12">
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Panduan Keselamatan (K3)</h3>
-                        <div class="space-y-4">
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-yellow-300">
-                                <h4 class="font-bold text-lg text-yellow-800 flex items-center"><span class="text-2xl mr-3">⚠️</span>Bahaya Fisik</h4>
-                                <p class="mt-2 text-sm text-gray-600">Hindari menatap langsung cahaya intens untuk mencegah kerusakan retina. Bersihkan kepala lampu hanya saat dingin untuk menghindari luka bakar.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-red-300">
-                                <h4 class="font-bold text-lg text-red-800 flex items-center"><span class="text-2xl mr-3">🦠</span>Bahaya Biologi</h4>
-                                <p class="mt-2 text-sm text-gray-600">Lakukan disinfeksi rutin dengan metode *wipe-over* sesuai manual untuk mencegah kontaminasi dan penyebaran infeksi.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-blue-300">
-                                <h4 class="font-bold text-lg text-blue-800 flex items-center"><span class="text-2xl mr-3">🧘</span>Bahaya Ergonomi</h4>
-                                <p class="mt-2 text-sm text-gray-600">Sesuaikan posisi lampu dengan tepat menggunakan *handle* untuk memaksimalkan kenyamanan dan visibilitas tim medis.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-gray-300">
-                                <h4 class="font-bold text-lg text-gray-800 flex items-center"><span class="text-2xl mr-3">⚡</span>Bahaya Keselamatan Umum</h4>
-                                <p class="mt-2 text-sm text-gray-600">Pastikan instalasi listrik benar dan dilakukan oleh staf spesialis. Jangan gunakan alat jika kabel atau steker rusak.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-purple-300">
-                                <h4 class="font-bold text-lg text-purple-800 flex items-center"><span class="text-2xl mr-3">🛠️</span>Perbaikan & Pemeliharaan (Lampu)</h4>
-                                <p class="mt-2 text-sm text-gray-600">Hanya personel terlatih dan berwenang yang boleh melakukan perbaikan dan pemeliharaan.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-green-300">
-                                <h4 class="font-bold text-lg text-green-800 flex items-center"><span class="text-2xl mr-3">🧪</span>K3 Kimia (USG)</h4>
-                                <p class="mt-2 text-sm text-gray-600">Gunakan cairan/gel yang direkomendasikan dan bersihkan sesuai pedoman. Buang limbah dengan benar.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-orange-300">
-                                <h4 class="font-bold text-lg text-orange-800 flex items-center"><span class="text-2xl mr-3">👁️</span>K3 Biologi (USG)</h4>
-                                <p class="mt-2 text-sm text-gray-600">Jaga probe transduser tetap steril setelah tiap penggunaan, dan gunakan *eye cup* steril. Hindari pasien dengan luka mata terbuka.</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-teal-300">
-                                <h4 class="font-bold text-lg text-teal-800 flex items-center"><span class="text-2xl mr-3">🪑</span>K3 Ergonomi (USG)</h4>
-                                <p class="mt-2 text-sm text-gray-600">Atur posisi pasien dan operator agar nyaman dan ergonomis (tinggi meja/kursi, penempatan monitor).</p>
-                            </div>
-                            <div class="k3-card bg-gray-50 p-5 rounded-lg border border-indigo-300">
-                                <h4 class="font-bold text-lg text-indigo-800 flex items-center"><span class="text-2xl mr-3">📚</span>K3 Umum (USG)</h4>
-                                <p class="mt-2 text-sm text-gray-600">Selalu baca manual, pastikan petugas kompeten, dan lakukan perawatan/kalibrasi rutin.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Jadwal Pemeliharaan Preventif</h3>
-                        <div class="relative border-l-2 border-gray-200 ml-3">
-                            <div class="mb-8 timeline-item">
-                                <div class="absolute w-4 h-4 bg-teal-500 rounded-full -left-2 border-2 border-white"></div>
-                                <div class="ml-6">
-                                    <h4 class="font-bold text-lg cursor-pointer timeline-title">Inspeksi Mingguan</h4>
-                                    <p class="text-sm text-gray-500">Sebelum setiap penggunaan</p>
-                                    <div class="timeline-item-content mt-2">
-                                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                            <li>Periksa bagian yang longgar pada kepala lampu.</li>
-                                            <li>Cari kerusakan yang terlihat, terutama pada penutup dan handle.</li>
-                                            <li>Pastikan handle terpasang dengan aman.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-8 timeline-item">
-                                <div class="absolute w-4 h-4 bg-teal-500 rounded-full -left-2 border-2 border-white"></div>
-                                <div class="ml-6">
-                                    <h4 class="font-bold text-lg cursor-pointer timeline-title">Inspeksi Tahunan</h4>
-                                    <p class="text-sm text-gray-500">Dilakukan oleh teknisi operator</p>
-                                     <div class="timeline-item-content mt-2">
-                                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                                            <li>Periksa deformasi komponen kepala lampu dan sistem pendukung.</li>
-                                            <li>Periksa kerusakan cat pada seluruh sistem.</li>
-                                            <li>Pastikan tidak ada komponen plastik yang hilang atau retak.</li>
-                                            <li>Cek keterbacaan label tipe.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="absolute w-4 h-4 bg-teal-500 rounded-full -left-2 border-2 border-white"></div>
-                                <div class="ml-6">
-                                    <h4 class="font-bold text-lg cursor-pointer timeline-title">Pemeliharaan Dua Tahunan</h4>
-                                    <p class="text-sm text-gray-500">Servis mendalam oleh personel resmi</p>
-                                    <div class="timeline-item-content mt-2">
-                                        <p class="text-sm text-gray-600">Prosedur ini harus dilakukan oleh personel servis yang terlatih dan diotorisasi oleh Trumpf Medical. Rincian tidak tersedia untuk pengguna akhir.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div id="mainCourseList" class="space-y-4">
+                <h2 class="font-black text-xl mb-4 italic">Daftar Mata Kuliah 📚</h2>
+                <!-- Course list will be injected here -->
             </div>
         </section>
 
     </main>
-    
-    <footer class="bg-white mt-12">
-        <div class="container mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Gen Yus Hafiz Moreno - Laporan Interaktif PKL Poltekkes Kemenkes Surabaya di RS Mata Cicendo.</p>
+
+    <!-- MODAL SESSION -->
+    <div id="sessionModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end justify-center">
+        <div class="bg-white w-full max-w-xl rounded-t-[3rem] p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center">
+                <div id="modalHeader"></div>
+                <button onclick="closeModal()" class="w-10 h-10 bg-pink-50 rounded-full text-pink-400 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-4">
+                <div id="taskPrompt" class="p-4 bg-pink-50 rounded-2xl border border-pink-100"></div>
+                
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase text-pink-300 tracking-widest px-1">Draf Jawaban / Catatan Belajar</label>
+                    <textarea id="studyNote" class="w-full bg-slate-50 border-none rounded-[1.5rem] p-5 text-sm focus:ring-2 focus:ring-pink-200 outline-none min-h-[150px]" placeholder="Tuliskan draf jawaban diskusimu di sini supaya tidak lupa..."></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 p-4 bg-white border border-pink-100 rounded-2xl">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="checkDone" class="hidden">
+                        <div class="pink-check"><i class="fa-solid fa-check text-xs"></i></div>
+                        <span class="text-xs font-bold">Sudah saya jawab di portal UT</span>
+                    </label>
+                </div>
+
+                <button onclick="saveSession()" class="w-full bg-[#FF85A1] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-pink-100">Simpan Progress 🎀</button>
+            </div>
         </div>
-    </footer>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const navLinks = document.querySelectorAll('.nav-link');
-            const contentSections = document.querySelectorAll('.content-section');
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
+        // Data Mata Kuliah Zalva dari Foto
+        const zalvaCourses = [
+            { id: 1, name: "Akuntansi Keuangan Dasar 58", type: "praton", code: "FHISIP" },
+            { id: 2, name: "Filsafat Bisnis 65", type: "tuton", code: "FHISIP" },
+            { id: 3, name: "Kewirausahaan di Era Digital 1052", type: "tuton", code: "FKIP" },
+            { id: 4, name: "Manajemen Sumber Daya Manusia 780", type: "tuton", code: "FE" },
+            { id: 5, name: "Pengantar Bisnis 136", type: "tuton", code: "FHISIP" },
+            { id: 6, name: "Pengantar Statistika 755", type: "tuton", code: "FST" },
+            { id: 7, name: "Perencanaan dan Pengembangan Bisnis 27", type: "praton", code: "FHISIP" },
+            { id: 8, name: "Sosiologi Industri 49", type: "tuton", code: "FHISIP" }
+        ];
 
-            function switchTab(targetId) {
-                contentSections.forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById(targetId).classList.add('active');
+        // State Management
+        let userProgress = JSON.parse(localStorage.getItem('zalva_progress')) || {};
+        let activeCourse = null;
+        let activeSession = null;
 
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.dataset.target === targetId) {
-                        link.classList.add('active');
+        function showTab(tab) {
+            document.getElementById('tab-home').classList.toggle('hidden', tab !== 'home');
+            document.getElementById('tab-courses').classList.toggle('hidden', tab !== 'courses');
+            document.getElementById('nav-home').classList.toggle('active-tab', tab === 'home');
+            document.getElementById('nav-courses').classList.toggle('active-tab', tab === 'courses');
+            
+            if(tab === 'home') renderHome();
+            else renderCourseList();
+        }
+
+        function renderHome() {
+            const reminderContainer = document.getElementById('urgentReminders');
+            const miniList = document.getElementById('miniCourseList');
+            reminderContainer.innerHTML = '';
+            miniList.innerHTML = '';
+
+            // Cari sesi yang belum selesai (Minggu 1-8 adalah standar UT)
+            let pendingCount = 0;
+            zalvaCourses.forEach(course => {
+                // Tampilkan card mini
+                const doneCount = Object.keys(userProgress[course.id] || {}).filter(k => userProgress[course.id][k].done).length;
+                miniList.innerHTML += `
+                    <div onclick="openCourse(${course.id})" class="bg-white p-4 rounded-2xl border border-pink-50 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-400">
+                                <i class="fa-solid ${course.type === 'tuton' ? 'fa-comments' : 'fa-clipboard-list'}"></i>
+                            </div>
+                            <div class="max-w-[150px]">
+                                <h4 class="text-[11px] font-black truncate">${course.name}</h4>
+                                <div class="w-24 bg-pink-50 h-1.5 rounded-full mt-1 overflow-hidden">
+                                    <div class="bg-[#FF85A1] h-full" style="width: ${(doneCount/8)*100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-pink-100"></i>
+                    </div>
+                `;
+
+                // Logika pengingat otomatis (Contoh minggu berjalan adalah Minggu 3)
+                const currentWeek = 3; 
+                const taskKey = `s${currentWeek}`;
+                const isDone = userProgress[course.id]?.[taskKey]?.done;
+
+                if(!isDone) {
+                    let taskName = course.type === 'tuton' ? "Diskusi" : "Baca Materi";
+                    if(currentWeek % 3 === 0) {
+                        taskName = course.type === 'tuton' ? "🔥 Tugas Makalah" : "🔥 Tugas Wawancara";
                     }
-                });
-            }
 
-            navLinks.forEach(link => {
-                link.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.dataset.target;
-                    switchTab(targetId);
-                    if(mobileMenu.classList.contains('block')){
-                        mobileMenu.classList.remove('block');
-                        mobileMenu.classList.add('hidden');
-                    }
-                });
-            });
-
-            mobileMenuButton.addEventListener('click', function() {
-                const isHidden = mobileMenu.classList.contains('hidden');
-                if (isHidden) {
-                    mobileMenu.classList.remove('hidden');
-                    mobileMenu.classList.add('block');
-                } else {
-                    mobileMenu.classList.remove('block');
-                    mobileMenu.classList.add('hidden');
+                    reminderContainer.innerHTML += `
+                        <div onclick="openSession(${course.id}, ${currentWeek})" class="flex items-center gap-3 bg-white/60 p-3 rounded-xl border border-white">
+                            <div class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center text-[10px] text-pink-500 font-black">${currentWeek}</div>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-black uppercase text-pink-400">${course.name.substring(0, 20)}...</p>
+                                <p class="text-xs font-bold text-slate-700">${taskName} Minggu ${currentWeek}</p>
+                            </div>
+                            <i class="fa-solid fa-circle-exclamation text-pink-300 animate-pulse"></i>
+                        </div>
+                    `;
+                    pendingCount++;
                 }
             });
+
+            if(pendingCount === 0) {
+                reminderContainer.innerHTML = '<div class="text-center py-4 text-xs font-bold text-pink-400">Yey! Semua tugas minggu ini sudah beres ✨</div>';
+            }
+        }
+
+        function renderCourseList() {
+            const list = document.getElementById('mainCourseList');
+            list.innerHTML = `<h2 class="font-black text-xl mb-4 italic">Daftar Mata Kuliah 📚</h2>`;
             
-            const timelineTitles = document.querySelectorAll('.timeline-title');
-            timelineTitles.forEach(title => {
-                title.addEventListener('click', () => {
-                    const content = title.nextElementSibling.nextElementSibling;
-                    if (content.style.maxHeight) {
-                        content.style.maxHeight = null;
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                    }
-                });
+            zalvaCourses.forEach(c => {
+                const doneCount = Object.keys(userProgress[c.id] || {}).filter(k => userProgress[c.id][k].done).length;
+                list.innerHTML += `
+                    <div onclick="openCourse(${c.id})" class="bg-white p-6 rounded-[2rem] coquette-border flex items-center justify-between animate-pop">
+                        <div>
+                            <span class="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-pink-50 text-pink-400 rounded-md mb-2 inline-block">${c.type}</span>
+                            <h3 class="font-black text-slate-800">${c.name}</h3>
+                            <p class="text-[10px] text-slate-400 font-bold mt-1">${doneCount} dari 12 Sesi Selesai</p>
+                        </div>
+                        <div class="w-12 h-12 bg-pink-50 rounded-2xl flex items-center justify-center text-pink-400">
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </div>
+                    </div>
+                `;
             });
+        }
 
-            const sectionToggles = document.querySelectorAll('.section-title-toggle');
-            sectionToggles.forEach(toggle => {
-                toggle.addEventListener('click', () => {
-                    const targetId = toggle.dataset.toggle;
-                    const content = document.getElementById(targetId);
-                    const icon = toggle.querySelector('svg');
+        function openCourse(id) {
+            activeCourse = zalvaCourses.find(c => c.id === id);
+            document.getElementById('mainCourseList').classList.add('hidden');
+            document.getElementById('courseDetailView').classList.remove('hidden');
+            
+            document.getElementById('courseHeader').innerHTML = `
+                <span class="text-[10px] font-black uppercase tracking-widest text-pink-300">${activeCourse.type}</span>
+                <h2 class="text-2xl font-black italic">${activeCourse.name}</h2>
+            `;
 
-                    if (content.style.maxHeight) {
-                        content.style.maxHeight = null;
-                        toggle.classList.remove('expanded');
-                    } else {
-                        content.style.maxHeight = content.scrollHeight + "px";
-                        toggle.classList.add('expanded');
-                    }
-                });
-            });
+            const grid = document.getElementById('sessionGrid');
+            grid.innerHTML = '';
+            for(let i=1; i<=12; i++) {
+                const isDone = userProgress[id]?.[`s${i}`]?.done;
+                grid.innerHTML += `
+                    <button onclick="openSession(${id}, ${i})" class="session-card aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 border-2 ${isDone ? 'bg-pink-500 border-pink-500 text-white shadow-lg shadow-pink-100' : 'bg-white border-pink-50 text-pink-300'}">
+                        <span class="text-[10px] font-black opacity-60">SESI</span>
+                        <span class="text-xl font-black">${i}</span>
+                    </button>
+                `;
+            }
+        }
 
-            const probeData = {
-                labels: ['A-Scan', 'B-Scan (1)', 'B-Scan (2)', 'Pachymeter', 'UBM'],
-                frequencies: [10, 12, 15, 10.5, 48],
-                resolutions: [0.1, 0.015, 0.015, 0.005, 0.015], // Pachymeter accuracy is 5µm = 0.005mm
-                resolutionLabels: ['Akurasi (mm)', 'Resolusi Axial (mm)', 'Resolusi Axial (mm)', 'Akurasi (mm)', 'Resolusi Axial (mm)']
+        function backToCourses() {
+            document.getElementById('mainCourseList').classList.remove('hidden');
+            document.getElementById('courseDetailView').classList.add('hidden');
+            renderCourseList();
+        }
+
+        function openSession(courseId, sessionNum) {
+            activeCourse = zalvaCourses.find(c => c.id === courseId);
+            activeSession = sessionNum;
+            
+            document.getElementById('sessionModal').classList.remove('hidden');
+            document.getElementById('modalHeader').innerHTML = `
+                <p class="text-[10px] font-black text-pink-300 uppercase tracking-widest">${activeCourse.name}</p>
+                <h4 class="text-lg font-black italic">Sesi ${sessionNum} ✨</h4>
+            `;
+
+            // Logika Tugas
+            let prompt = "";
+            if(activeCourse.type === 'tuton') {
+                prompt = sessionNum % 3 === 0 
+                    ? "📌 <b>Tugas Wajib:</b> Kerjakan Tugas Makalah dan upload di portal UT."
+                    : "💬 <b>Diskusi Mingguan:</b> Jawab pertanyaan diskusi di forum sesuai materi sesi ini.";
+            } else {
+                prompt = sessionNum % 3 === 0
+                    ? "📸 <b>Tugas Wawancara/Essay:</b> Lakukan wawancara atau tulis essay sesuai panduan Praton."
+                    : "📖 <b>Materi Sesi:</b> Pelajari modul dan materi inisiasi. Tidak ada diskusi wajib minggu ini.";
+            }
+            document.getElementById('taskPrompt').innerHTML = prompt;
+
+            // Load Data
+            const data = userProgress[courseId]?.[`s${sessionNum}`] || { note: '', done: false };
+            document.getElementById('studyNote').value = data.note;
+            document.getElementById('checkDone').checked = data.done;
+        }
+
+        function closeModal() {
+            document.getElementById('sessionModal').classList.add('hidden');
+        }
+
+        function saveSession() {
+            if(!userProgress[activeCourse.id]) userProgress[activeCourse.id] = {};
+            
+            userProgress[activeCourse.id][`s${activeSession}`] = {
+                note: document.getElementById('studyNote').value,
+                done: document.getElementById('checkDone').checked,
+                updatedAt: new Date().toISOString()
             };
 
-            const freqCtx = document.getElementById('frequencyChart').getContext('2d');
-            new Chart(freqCtx, {
-                type: 'bar',
-                data: {
-                    labels: probeData.labels,
-                    datasets: [{
-                        label: 'Frekuensi (MHz)',
-                        data: probeData.frequencies,
-                        backgroundColor: 'rgba(0, 122, 122, 0.6)',
-                        borderColor: 'rgba(0, 122, 122, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Frekuensi (MHz)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
+            localStorage.setItem('zalva_progress', JSON.stringify(userProgress));
+            closeModal();
+            
+            if(!document.getElementById('courseDetailView').classList.contains('hidden')) {
+                openCourse(activeCourse.id);
+            } else {
+                renderHome();
+            }
+        }
 
-            const resCtx = document.getElementById('resolutionChart').getContext('2d');
-            new Chart(resCtx, {
-                type: 'bar',
-                data: {
-                    labels: probeData.labels,
-                    datasets: [{
-                        label: 'Resolusi/Akurasi (mm)',
-                        data: probeData.resolutions,
-                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            type: 'logarithmic',
-                            title: {
-                                display: true,
-                                text: 'Resolusi/Akurasi (mm) - Skala Log'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                             callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y + ' mm';
-                                    }
-                                    const originalLabel = probeData.resolutionLabels[context.dataIndex];
-                                    return [label, '(' + originalLabel + ')'];
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        });
+        // Init
+        window.onload = () => {
+            renderHome();
+        }
     </script>
 </body>
 </html>
+
+```
